@@ -698,7 +698,7 @@ func displayDNSHelp(w io.Writer, name string) error {
 		ew.writeln(`Credentials:`)
 		ew.writeln(`	- "CLOUDRU_KEY_ID":	Key ID (login)`)
 		ew.writeln(`	- "CLOUDRU_SECRET":	Key Secret`)
-		ew.writeln(`	- "CLOUDRU_SERVICE_INSTANCE_ID":	Service Instance ID (parentId)`)
+		ew.writeln(`	- "CLOUDRU_DNS_ZONE_ID":	Service Instance ID (parentId)`)
 		ew.writeln()
 
 		ew.writeln(`Additional Configuration:`)

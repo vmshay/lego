@@ -17,8 +17,8 @@ import (
 
 // Default API endpoints.
 const (
-	APIBaseURL  = "https://console.cloud.ru/api/clouddns/v1"
-	AuthBaseURL = "https://auth.iam.cloud.ru/auth/system/openid/token"
+	APIBaseURL  = "https://console.cloud.ru/u-api/svp/evodns/v1/public"
+	AuthBaseURL = "https://id.cloud.ru/auth/system/openid/token"
 )
 
 // Client the Cloud.ru API client.
@@ -48,30 +48,26 @@ func NewClient(login, secret string) *Client {
 	}
 }
 
-func (c *Client) GetZones(ctx context.Context, parentID string) ([]Zone, error) {
-	endpoint := c.APIEndpoint.JoinPath("zones")
-
-	query := endpoint.Query()
-	query.Set("parentId", parentID)
-	endpoint.RawQuery = query.Encode()
-
+func (c *Client) GetZone(ctx context.Context, zoneID string) (*Zone, error) {
+	endpoint := c.APIEndpoint.JoinPath("zones", zoneID)
 	req, err := newJSONRequest(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	var zones APIResponse[Zone]
-	err = c.do(req, &zones)
+	var resp ZoneResponse
+	err = c.do(req, &resp)
 	if err != nil {
 		return nil, err
 	}
-
-	return zones.Items, nil
+	return &resp.Zone, nil
 }
 
 func (c *Client) GetRecords(ctx context.Context, zoneID string) ([]Record, error) {
-	endpoint := c.APIEndpoint.JoinPath("zones", zoneID, "records")
-
+	endpoint := c.APIEndpoint.JoinPath("records")
+	query := endpoint.Query()
+	query.Set("zoneId", zoneID)
+	endpoint.RawQuery = query.Encode()
 	req, err := newJSONRequest(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, err
@@ -82,19 +78,18 @@ func (c *Client) GetRecords(ctx context.Context, zoneID string) ([]Record, error
 	if err != nil {
 		return nil, err
 	}
-
+	
 	return records.Items, nil
 }
 
-func (c *Client) CreateRecord(ctx context.Context, zoneID string, record Record) (*Record, error) {
-	endpoint := c.APIEndpoint.JoinPath("zones", zoneID, "records")
-
+func (c *Client) CreateRecord(ctx context.Context, record Record) (*RecordMeta, error) {
+	endpoint := c.APIEndpoint.JoinPath("records")
 	req, err := newJSONRequest(ctx, http.MethodPost, endpoint, record)
 	if err != nil {
 		return nil, err
 	}
 
-	var result Record
+	var result RecordMeta
 	err = c.do(req, &result)
 	if err != nil {
 		return nil, err
@@ -103,9 +98,8 @@ func (c *Client) CreateRecord(ctx context.Context, zoneID string, record Record)
 	return &result, nil
 }
 
-func (c *Client) DeleteRecord(ctx context.Context, zoneID, name, recordType string) error {
-	endpoint := c.APIEndpoint.JoinPath("zones", zoneID, "records", name, recordType)
-
+func (c *Client) DeleteRecord(ctx context.Context, RecordID string) error {
+	endpoint := c.APIEndpoint.JoinPath("records",RecordID)
 	req, err := newJSONRequest(ctx, http.MethodDelete, endpoint, nil)
 	if err != nil {
 		return err
@@ -137,7 +131,6 @@ func (c *Client) do(req *http.Request, result any) error {
 	if err != nil {
 		return errutils.NewReadResponseError(req, resp.StatusCode, err)
 	}
-
 	if result == nil {
 		return nil
 	}

@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -14,15 +14,16 @@ import (
 	"github.com/go-acme/lego/v4/challenge/dns01"
 	"github.com/go-acme/lego/v4/platform/config/env"
 	"github.com/go-acme/lego/v4/providers/dns/cloudru/internal"
+	//"github.com/ultradns/ultradns-go-sdk/pkg/zone"
 )
 
 // Environment variables names.
 const (
 	envNamespace = "CLOUDRU_"
 
-	EnvServiceInstanceID = envNamespace + "SERVICE_INSTANCE_ID"
-	EnvKeyID             = envNamespace + "KEY_ID"
-	EnvSecret            = envNamespace + "SECRET"
+	EnvZoneID = envNamespace + "DNS_ZONE_ID"
+	EnvKeyID  = envNamespace + "KEY_ID"
+	EnvSecret = envNamespace + "SECRET"
 
 	EnvTTL                = envNamespace + "TTL"
 	EnvPropagationTimeout = envNamespace + "PROPAGATION_TIMEOUT"
@@ -62,21 +63,21 @@ func NewDefaultConfig() *Config {
 type DNSProvider struct {
 	config    *Config
 	client    *internal.Client
-	records   map[string]*internal.Record
+	records   map[string]*internal.RecordMeta
 	recordsMu sync.Mutex
 }
 
 // NewDNSProvider returns a DNSProvider instance configured for cloud.ru.
 // Credentials must be passed in the environment variables:
-// CLOUDRU_SERVICE_INSTANCE_ID, CLOUDRU_KEY_ID, and CLOUDRU_SECRET.
+// CLOUDRU_DNS_ZONE_ID, CLOUDRU_KEY_ID, and CLOUDRU_SECRET.
 func NewDNSProvider() (*DNSProvider, error) {
-	values, err := env.Get(EnvServiceInstanceID, EnvKeyID, EnvSecret)
+	values, err := env.Get(EnvZoneID, EnvKeyID, EnvSecret)
 	if err != nil {
 		return nil, fmt.Errorf("cloudru: %w", err)
 	}
 
 	config := NewDefaultConfig()
-	config.ServiceInstanceID = values[EnvServiceInstanceID]
+	config.ServiceInstanceID = values[EnvZoneID]
 	config.KeyID = values[EnvKeyID]
 	config.Secret = values[EnvSecret]
 
@@ -102,7 +103,7 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 	return &DNSProvider{
 		config:  config,
 		client:  client,
-		records: make(map[string]*internal.Record),
+		records: make(map[string]*internal.RecordMeta),
 	}, nil
 }
 
@@ -122,23 +123,26 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 		return fmt.Errorf("cloudru: %w", err)
 	}
 
-	zone, err := d.getZoneInformationByName(ctx, d.config.ServiceInstanceID, authZone)
+	zone, err := d.getZoneInformationByName(ctx, d.config.ServiceInstanceID)
 	if err != nil {
-		return fmt.Errorf("cloudru: could not find zone information (ServiceInstanceID: %s, zone: %s): %w", d.config.ServiceInstanceID, authZone, err)
+		return fmt.Errorf("cloudru: could not find zone information (ZoneID: %s, zone: %s): %w", d.config.ServiceInstanceID, authZone, err)
 	}
+	
+	trimmedName := strings.TrimSuffix(info.EffectiveFQDN,"." + zone.Domain)
 
 	record := internal.Record{
-		Name:   info.EffectiveFQDN,
-		Type:   "TXT",
+		Name:   trimmedName,
+		//Name:	"_acme-challenge.ooooo",
+		Type:   "PUBLIC_RECORD_MANAGED_TYPE_TXT",
+		TTL:    d.config.TTL,
 		Values: []string{info.Value},
-		TTL:    strconv.Itoa(d.config.TTL),
+		ZoneID: d.config.ServiceInstanceID,
 	}
 
-	newRecord, err := d.client.CreateRecord(ctx, zone.ID, record)
+	newRecord, err := d.client.CreateRecord(ctx, record)
 	if err != nil {
 		return fmt.Errorf("cloudru: could not create record: %w", err)
 	}
-
 	d.recordsMu.Lock()
 	d.records[token] = newRecord
 	d.recordsMu.Unlock()
@@ -163,7 +167,7 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 		return fmt.Errorf("cloudru: %w", err)
 	}
 
-	err = d.client.DeleteRecord(ctx, record.ZoneID, record.Name, "TXT")
+	err = d.client.DeleteRecord(ctx, record.Task.EntityID)
 	if err != nil {
 		return fmt.Errorf("cloudru: %w", err)
 	}
@@ -187,17 +191,11 @@ func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 	return d.config.PropagationTimeout, d.config.PollingInterval
 }
 
-func (d *DNSProvider) getZoneInformationByName(ctx context.Context, parentID, name string) (internal.Zone, error) {
-	zs, err := d.client.GetZones(ctx, parentID)
+func (d *DNSProvider) getZoneInformationByName(ctx context.Context, zoneID string) (internal.Zone, error) {
+	z, err := d.client.GetZone(ctx, zoneID)
 	if err != nil {
 		return internal.Zone{}, err
 	}
-
-	for _, element := range zs {
-		if element.Name == name {
-			return element, nil
-		}
-	}
-
-	return internal.Zone{}, errors.New("could not find Zone record")
+	return *z,nil
 }
+

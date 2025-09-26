@@ -11,7 +11,7 @@ import (
 const envDomain = envNamespace + "DOMAIN"
 
 var envTest = tester.NewEnvTest(
-	EnvServiceInstanceID,
+	EnvZoneID,
 	EnvKeyID,
 	EnvSecret).
 	WithDomain(envDomain)
@@ -25,40 +25,40 @@ func TestNewDNSProvider(t *testing.T) {
 		{
 			desc: "success",
 			envVars: map[string]string{
-				EnvServiceInstanceID: "123",
-				EnvKeyID:             "user",
-				EnvSecret:            "secret",
+				EnvZoneID: "123",
+				EnvKeyID:  "user",
+				EnvSecret: "secret",
 			},
 		},
 		{
 			desc:     "missing credentials",
 			envVars:  map[string]string{},
-			expected: "cloudru: some credentials information are missing: CLOUDRU_SERVICE_INSTANCE_ID,CLOUDRU_KEY_ID,CLOUDRU_SECRET",
+			expected: "cloudru: some credentials information are missing: CLOUDRU_DNS_ZONE_ID,CLOUDRU_KEY_ID,CLOUDRU_SECRET",
 		},
 		{
 			desc: "missing service instance ID",
 			envVars: map[string]string{
-				EnvServiceInstanceID: "",
-				EnvKeyID:             "user",
-				EnvSecret:            "secret",
+				EnvZoneID: "",
+				EnvKeyID:  "user",
+				EnvSecret: "secret",
 			},
-			expected: "cloudru: some credentials information are missing: CLOUDRU_SERVICE_INSTANCE_ID",
+			expected: "cloudru: some credentials information are missing: CLOUDRU_DNS_ZONE_ID",
 		},
 		{
 			desc: "missing key ID",
 			envVars: map[string]string{
-				EnvServiceInstanceID: "123",
-				EnvKeyID:             "",
-				EnvSecret:            "secret",
+				EnvZoneID: "123",
+				EnvKeyID:  "",
+				EnvSecret: "secret",
 			},
 			expected: "cloudru: some credentials information are missing: CLOUDRU_KEY_ID",
 		},
 		{
 			desc: "missing secret",
 			envVars: map[string]string{
-				EnvServiceInstanceID: "123",
-				EnvKeyID:             "user",
-				EnvSecret:            "",
+				EnvZoneID: "123",
+				EnvKeyID:  "user",
+				EnvSecret: "",
 			},
 			expected: "cloudru: some credentials information are missing: CLOUDRU_SECRET",
 		},

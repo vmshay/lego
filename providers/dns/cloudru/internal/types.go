@@ -31,23 +31,51 @@ type APIResponse[T any] struct {
 	Items []T `json:"items"`
 }
 
+type ZoneResponse struct {
+	Zone Zone `json:"zone"`
+}
+
 type Zone struct {
-	ID             string    `json:"id,omitempty"`
-	ParentID       string    `json:"parent_id,omitempty"`
-	Name           string    `json:"name,omitempty"`
-	Valid          bool      `json:"valid,omitempty"`
-	ValidationText string    `json:"validationText,omitempty"`
-	Delegated      bool      `json:"delegated,omitempty"`
-	LastCheck      time.Time `json:"lastCheck,omitempty"`
-	CreatedAt      time.Time `json:"created_at,omitempty"`
-	UpdatedAt      time.Time `json:"updated_at,omitempty"`
+	Meta            ZoneMeta  `json:"meta"`
+	ProjectID       string    `json:"projectId"`
+	Name            string    `json:"name"`
+	Domain          string    `json:"domain"`
+	ReadOnly        bool      `json:"readOnly"`
+	State           string    `json:"state"`
+	CountRecords    string    `json:"countRecords"`
+	CountValues     string    `json:"countValues"`
+	Description     string    `json:"description"`
+	Tags            []string  `json:"tags"`
+	ConfirmState    string    `json:"confirmState"`
+	NameServers     []string  `json:"NameServers"`
+	OwnerProductCode string   `json:"ownerProductCode"`
+	IsProductOwner  bool      `json:"isProductOwner"`
+}
+
+type ZoneMeta struct {
+	ID        string    `json:"id"`
+	TaskID    string    `json:"taskId"`
+	CreatedAt time.Time `json:"createAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 type Record struct {
-	ZoneID  string   `json:"zone_id,omitempty"`
+	ZoneID  string   `json:"zoneId,omitempty"`
 	Name    string   `json:"name,omitempty"`
 	Type    string   `json:"type,omitempty"`
 	Values  []string `json:"values,omitempty"`
-	TTL     string   `json:"ttl,omitempty"`
-	Enables bool     `json:"enables,omitempty"`
+	TTL     int      `json:"ttl,omitempty"`
+}
+type RecordMeta struct {
+	Task RecordTask `json:"task"`
+}
+
+type RecordTask struct {
+	ID        string    `json:"id"`
+	CreatedAt time.Time `json:"createAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+	EntityID  string    `json:"entityId"`
+	Entity    string    `json:"entity"`
+	Type      string    `json:"type"`
+	Status    string    `json:"status"`
 }

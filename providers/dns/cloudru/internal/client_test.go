@@ -74,8 +74,7 @@ func TestClient_GetRecords(t *testing.T) {
 			Values: []string{
 				"cdns-ns01.sbercloud.ru. mail.sbercloud.ru 1 120 3600 604800 3600",
 			},
-			TTL:     "3600",
-			Enables: true,
+			TTL: 3600,
 		},
 		{
 			ZoneID: "59556fcd-95ff-451f-b49b-9732f21f944a",
@@ -85,8 +84,7 @@ func TestClient_GetRecords(t *testing.T) {
 				"cdns-ns01.sbercloud.ru.",
 				"cdns-ns02.sbercloud.ru.",
 			},
-			TTL:     "3600",
-			Enables: true,
+			TTL: 3600,
 		},
 		{
 			ZoneID: "59556fcd-95ff-451f-b49b-9732f21f944a",
@@ -95,8 +93,7 @@ func TestClient_GetRecords(t *testing.T) {
 			Values: []string{
 				"8.8.8.8",
 			},
-			TTL:     "3600",
-			Enables: true,
+			TTL: 3600,
 		},
 	}
 	assert.Equal(t, expected, records)
@@ -106,7 +103,7 @@ func TestClient_CreateRecord(t *testing.T) {
 	client := mockBuilder().
 		Route("POST /zones/zzz/records",
 			servermock.ResponseFromFixture("record.json"),
-			servermock.CheckRequestJSONBody(`{"name":"www.example.com.","type":"TXT","values":["text"],"ttl":"3600"}`)).
+			servermock.CheckRequestJSONBody(`{"name":"www.example.com.","type":"TXT","values":["text"],"ttl":3600}`)).
 		Build(t)
 
 	ctx := mockContext(t)
@@ -115,7 +112,7 @@ func TestClient_CreateRecord(t *testing.T) {
 		Name:   "www.example.com.",
 		Type:   "TXT",
 		Values: []string{"text"},
-		TTL:    "3600",
+		TTL:    3600,
 	}
 
 	record, err := client.CreateRecord(ctx, "zzz", recordReq)
@@ -128,8 +125,7 @@ func TestClient_CreateRecord(t *testing.T) {
 		Values: []string{
 			"txt",
 		},
-		TTL:     "3600",
-		Enables: true,
+		TTL:     3600,
 	}
 	assert.Equal(t, expected, record)
 }
