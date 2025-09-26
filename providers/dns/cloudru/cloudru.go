@@ -14,7 +14,6 @@ import (
 	"github.com/go-acme/lego/v4/challenge/dns01"
 	"github.com/go-acme/lego/v4/platform/config/env"
 	"github.com/go-acme/lego/v4/providers/dns/cloudru/internal"
-	//"github.com/ultradns/ultradns-go-sdk/pkg/zone"
 )
 
 // Environment variables names.
@@ -127,7 +126,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	if err != nil {
 		return fmt.Errorf("cloudru: could not find zone information (ZoneID: %s, zone: %s): %w", d.config.ServiceInstanceID, authZone, err)
 	}
-	
+
 	trimmedName := strings.TrimSuffix(info.EffectiveFQDN,"." + zone.Domain)
 
 	record := internal.Record{
