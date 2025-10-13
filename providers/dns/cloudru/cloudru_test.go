@@ -88,14 +88,14 @@ func TestNewDNSProvider(t *testing.T) {
 func TestNewDNSProviderConfig(t *testing.T) {
 	testCases := []struct {
 		desc              string
-		serviceInstanceID string
+		zoneID string
 		keyID             string
 		secret            string
 		expected          string
 	}{
 		{
 			desc:              "success",
-			serviceInstanceID: "123",
+			zoneID: "123",
 			keyID:             "user",
 			secret:            "secret",
 		},
@@ -105,21 +105,21 @@ func TestNewDNSProviderConfig(t *testing.T) {
 		},
 		{
 			desc:              "missing service instance ID",
-			serviceInstanceID: "",
+			zoneID: "",
 			keyID:             "user",
 			secret:            "secret",
 			expected:          "cloudru: some credentials information are missing",
 		},
 		{
 			desc:              "missing key ID",
-			serviceInstanceID: "123",
+			zoneID: "123",
 			keyID:             "",
 			secret:            "secret",
 			expected:          "cloudru: some credentials information are missing",
 		},
 		{
 			desc:              "missing secret",
-			serviceInstanceID: "123",
+			zoneID: "123",
 			keyID:             "user",
 			secret:            "",
 			expected:          "cloudru: some credentials information are missing",
@@ -129,7 +129,7 @@ func TestNewDNSProviderConfig(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			config := NewDefaultConfig()
-			config.ServiceInstanceID = test.serviceInstanceID
+			config.zoneID = test.zoneID
 			config.KeyID = test.keyID
 			config.Secret = test.secret
 

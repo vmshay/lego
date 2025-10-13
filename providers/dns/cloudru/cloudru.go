@@ -35,9 +35,9 @@ var _ challenge.ProviderTimeout = (*DNSProvider)(nil)
 
 // Config is used to configure the creation of the DNSProvider.
 type Config struct {
-	ServiceInstanceID string
-	KeyID             string
-	Secret            string
+	ZoneID string
+	KeyID  string
+	Secret string
 
 	PropagationTimeout time.Duration
 	PollingInterval    time.Duration
@@ -76,7 +76,7 @@ func NewDNSProvider() (*DNSProvider, error) {
 	}
 
 	config := NewDefaultConfig()
-	config.ServiceInstanceID = values[EnvZoneID]
+	config.ZoneID = values[EnvZoneID]
 	config.KeyID = values[EnvKeyID]
 	config.Secret = values[EnvSecret]
 
@@ -89,7 +89,7 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 		return nil, errors.New("cloudru: the configuration of the DNS provider is nil")
 	}
 
-	if config.ServiceInstanceID == "" || config.KeyID == "" || config.Secret == "" {
+	if config.ZoneID == "" || config.KeyID == "" || config.Secret == "" {
 		return nil, errors.New("cloudru: some credentials information are missing")
 	}
 
@@ -122,20 +122,20 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 		return fmt.Errorf("cloudru: %w", err)
 	}
 
-	zone, err := d.getZoneInformationByName(ctx, d.config.ServiceInstanceID)
+	zone, err := d.getZoneInformationByName(ctx, d.config.ZoneID)
 	if err != nil {
-		return fmt.Errorf("cloudru: could not find zone information (ZoneID: %s, zone: %s): %w", d.config.ServiceInstanceID, authZone, err)
+		return fmt.Errorf("cloudru: could not find zone information (ZoneID: %s, zone: %s): %w", d.config.ZoneID, authZone, err)
 	}
 
-	trimmedName := strings.TrimSuffix(info.EffectiveFQDN,"." + zone.Domain)
+	trimmedName := strings.TrimSuffix(info.EffectiveFQDN, "."+zone.Domain)
 
 	record := internal.Record{
-		Name:   trimmedName,
+		Name: trimmedName,
 		//Name:	"_acme-challenge.ooooo",
 		Type:   "PUBLIC_RECORD_MANAGED_TYPE_TXT",
 		TTL:    d.config.TTL,
 		Values: []string{info.Value},
-		ZoneID: d.config.ServiceInstanceID,
+		ZoneID: d.config.ZoneID,
 	}
 
 	newRecord, err := d.client.CreateRecord(ctx, record)
@@ -195,6 +195,5 @@ func (d *DNSProvider) getZoneInformationByName(ctx context.Context, zoneID strin
 	if err != nil {
 		return internal.Zone{}, err
 	}
-	return *z,nil
+	return *z, nil
 }
-
